@@ -11,7 +11,7 @@ const labelMap: Record<LeaderboardPeriod, string> = {
 };
 
 type PeriodFilterProps = {
-  periods: LeaderboardPeriod[];
+  periods: readonly LeaderboardPeriod[];
   active: LeaderboardPeriod;
   onChange: (period: LeaderboardPeriod) => void;
 };
