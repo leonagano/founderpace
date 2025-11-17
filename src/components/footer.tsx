@@ -13,20 +13,6 @@ export const Footer = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-4 text-xs text-neutral-500">
-            <Link
-              href="mailto:hello@founderpace.com"
-              className="hover:text-neutral-900"
-            >
-              Contact
-            </Link>
-            <Link
-              href="https://strava.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-neutral-900"
-            >
-              Powered by Strava
-            </Link>
           </div>
         </div>
       </div>
