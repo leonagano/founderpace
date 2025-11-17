@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { updateUserSocials } from "@/lib/repositories";
+import { rebuildAllLeaderboards } from "@/lib/leaderboard-service";
 
 const payloadSchema = z.object({
   userId: z.string(),
@@ -18,6 +19,8 @@ export async function POST(req: Request) {
     const json = await req.json();
     const { userId, socials, startupName } = payloadSchema.parse(json);
     await updateUserSocials(userId, socials, startupName);
+    // Rebuild leaderboard cache to reflect updated startup names
+    await rebuildAllLeaderboards();
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error(error);

@@ -52,8 +52,9 @@ export const updateUserSocials = async (
     socials,
     updated_at: new Date().toISOString(),
   };
-  if (startupName) {
-    update.startup_name = startupName;
+  // Always update startup_name if provided (even if empty string)
+  if (startupName !== undefined) {
+    update.startup_name = startupName || undefined;
   }
   await db.collection<UserDoc>(usersCollection).updateOne(
     { _id: new ObjectId(userId) },
