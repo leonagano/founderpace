@@ -16,6 +16,7 @@ export type UserDoc = {
   socials?: Socials;
   country?: string;
   created_at: string;
+  updated_at?: string;
   access_token?: string;
   refresh_token?: string;
   token_expires_at?: number;
