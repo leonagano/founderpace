@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { SocialsForm } from "@/components/socials-form";
@@ -11,7 +11,7 @@ type State =
   | { status: "success"; userId: string }
   | { status: "error"; message: string };
 
-export default function StravaCallbackPage() {
+function StravaCallbackContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
   const errorMessage = searchParams.get("error");
@@ -140,6 +140,22 @@ export default function StravaCallbackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function StravaCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-6">
+          <div className="w-full max-w-lg rounded-2xl border border-neutral-200 bg-white p-10 text-center">
+            <h1 className="text-2xl font-semibold text-neutral-900">Loading…</h1>
+          </div>
+        </div>
+      }
+    >
+      <StravaCallbackContent />
+    </Suspense>
   );
 }
 
