@@ -30,8 +30,8 @@ export const upsertUser = async (user: UserDoc) => {
     },
     { upsert: true, returnDocument: "after" }
   );
-  // If result.value is null (shouldn't happen, but handle edge case), fetch the user
-  if (result.value) {
+  // If result or result.value is null (shouldn't happen, but handle edge case), fetch the user
+  if (result?.value) {
     return result.value;
   }
   // Fallback: fetch the user by strava_id
