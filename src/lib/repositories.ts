@@ -30,9 +30,9 @@ export const upsertUser = async (user: UserDoc) => {
     },
     { upsert: true, returnDocument: "after" }
   );
-  // If result or result.value is null (shouldn't happen, but handle edge case), fetch the user
-  if (result?.value) {
-    return result.value;
+  // If result is null (shouldn't happen, but handle edge case), fetch the user
+  if (result) {
+    return result;
   }
   // Fallback: fetch the user by strava_id
   const fetched = await db.collection<UserDoc>(usersCollection).findOne({ strava_id });
