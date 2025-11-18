@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Socials } from "@/lib/types";
 
 type SocialsFormProps = {
@@ -42,6 +43,7 @@ export const SocialsForm = ({
   initialSocials,
   initialStartupName,
 }: SocialsFormProps) => {
+  const router = useRouter();
   const [socials, setSocials] = useState<Socials>({
     x_handle: initialSocials?.x_handle ?? "",
     linkedin: initialSocials?.linkedin ?? "",
@@ -69,6 +71,8 @@ export const SocialsForm = ({
       setMessage(res.ok ? "Saved" : "Unable to save");
       if (res.ok) {
         setSocials(normalizedSocials);
+        // Refresh the page to show updated data
+        router.refresh();
       }
     });
   };
@@ -114,8 +118,7 @@ export const SocialsForm = ({
           Social links
         </h4>
         <p className="text-sm text-neutral-500">
-          Optional but public. Add them now — updating later will require manual help while
-          we finish the profile editor.
+          Optional but public. Update your social links and startup name below.
         </p>
       </div>
       <label className="block text-sm font-medium text-neutral-700">

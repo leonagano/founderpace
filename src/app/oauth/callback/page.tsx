@@ -42,6 +42,10 @@ function StravaCallbackContent() {
           return;
         }
         const json = await res.json();
+        // Store userId in localStorage for profile editing
+        if (typeof window !== "undefined" && json.userId) {
+          localStorage.setItem("founderpace_userId", json.userId);
+        }
         setState({ status: "success", userId: json.userId });
       } catch {
         setState({ status: "error", message: "Network error" });
