@@ -292,7 +292,7 @@ export const getChallengeLeaderboard = async (
         return a.completed ? -1 : 1;
       }
       return b.progress_metric - a.progress_metric;
-    });
+    }) as ChallengeLeaderboardEntry[];
 
   return entries;
 };
