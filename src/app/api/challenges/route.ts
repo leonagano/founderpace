@@ -108,7 +108,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ challenge: created });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error(error);
     return NextResponse.json({ error: "Unable to create challenge" }, { status: 500 });

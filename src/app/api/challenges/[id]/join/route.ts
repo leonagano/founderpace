@@ -41,7 +41,7 @@ export async function POST(req: Request, { params }: RouteParams) {
     return NextResponse.json({ participant });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json({ error: error.issues }, { status: 400 });
     }
     console.error(error);
     return NextResponse.json({ error: "Unable to join challenge" }, { status: 500 });
