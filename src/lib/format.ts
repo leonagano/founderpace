@@ -9,3 +9,17 @@ export const formatPace = (secondsPerKm: number) => {
   return `${minutes}:${seconds}/km`;
 };
 
+export const formatDuration = (totalSeconds: number) => {
+  if (!totalSeconds || !Number.isFinite(totalSeconds) || totalSeconds === 0) return "0h";
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h ${minutes}m`;
+  } else if (hours > 0) {
+    return `${hours}h`;
+  } else {
+    return `${minutes}m`;
+  }
+};
+

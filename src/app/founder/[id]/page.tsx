@@ -6,6 +6,7 @@ import { getStatsForUser, getUserById } from "@/lib/repositories";
 import { ProfileStatsGrid } from "@/components/profile-stats-grid";
 import { SocialLinks } from "@/components/social-links";
 import { ActivityChart } from "@/components/activity-chart";
+import { PaceChart } from "@/components/pace-chart";
 import { HeatmapGrid } from "@/components/heatmap-grid";
 import { SocialsForm } from "@/components/socials-form";
 import { ProfileEditButton } from "@/components/profile-edit-button";
@@ -30,7 +31,7 @@ export default async function FounderPage({ params, searchParams }: PageProps) {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10 lg:px-0">
-      <div className="flex items-center gap-3">
+      <Link href="/" className="flex items-center gap-3">
         <Image
           src="/icon_transparent.png"
           alt="FounderPace icon"
@@ -42,7 +43,7 @@ export default async function FounderPage({ params, searchParams }: PageProps) {
         <span className="text-sm font-semibold uppercase tracking-[0.4em] text-neutral-500">
           FounderPace
         </span>
-      </div>
+      </Link>
       <div className="flex items-center justify-between">
         <Link href="/" className="text-sm text-neutral-500 hover:text-neutral-900">
           ← Back to leaderboard
@@ -107,10 +108,17 @@ export default async function FounderPage({ params, searchParams }: PageProps) {
         totalKm={stats?.total_km}
         last30Km={stats?.last_30d_km}
         avgPace={stats?.avg_pace}
+        totalTime={
+          stats?.daily_activity?.reduce(
+            (total, activity) => total + (activity.duration_seconds || 0),
+            0
+          )
+        }
       />
 
       <div className="flex flex-col gap-8">
         <ActivityChart data={stats?.daily_activity} />
+        <PaceChart data={stats?.daily_activity} />
         <HeatmapGrid data={stats?.activity_heatmap} />
       </div>
 

@@ -8,8 +8,10 @@ import { Settings, LogOut } from "lucide-react";
 export const TopNav = () => {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== "undefined") {
       const storedUserId = localStorage.getItem("founderpace_userId");
       setUserId(storedUserId);
@@ -24,6 +26,11 @@ export const TopNav = () => {
       router.refresh();
     }
   };
+
+  // Don't render until after mount to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   // Don't show nav if user is not logged in
   if (!userId) {

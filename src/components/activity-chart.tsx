@@ -35,8 +35,10 @@ export const ActivityChart = ({ data }: ActivityChartProps) => {
   const chartData = Array.from(grouped.values())
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((entry) => {
-      const dateObj = new Date(entry.date);
-    const currentYear = new Date().getFullYear();
+      // Parse date as local date (YYYY-MM-DD) to avoid timezone shifts
+      const [year, month, day] = entry.date.split("-").map(Number);
+      const dateObj = new Date(year, month - 1, day);
+      const currentYear = new Date().getFullYear();
       const entryYear = dateObj.getFullYear();
       const showYear = entryYear !== currentYear || dateObj.getMonth() === 0;
       return {
@@ -45,6 +47,15 @@ export const ActivityChart = ({ data }: ActivityChartProps) => {
         km: Number(entry.km.toFixed(2)),
       };
     });
+
+  // Calculate min and max for Y-axis domain
+  const kmValues = chartData.map((d) => d.km);
+  const minKm = Math.min(...kmValues);
+  const maxKm = Math.max(...kmValues);
+  const range = maxKm - minKm;
+  // Set domain to start slightly below minimum (5% padding) but not below 0
+  const yAxisMin = Math.max(0, minKm - range * 0.05);
+  const yAxisMax = maxKm + range * 0.05;
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-6">
@@ -67,7 +78,11 @@ export const ActivityChart = ({ data }: ActivityChartProps) => {
               interval="preserveStartEnd"
               tickCount={8}
             />
-            <YAxis stroke="#94a3b8" fontSize={12} />
+            <YAxis
+              stroke="#94a3b8"
+              fontSize={12}
+              domain={[yAxisMin, yAxisMax]}
+            />
             <Tooltip
               contentStyle={{
                 borderRadius: 16,

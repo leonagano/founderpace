@@ -1,6 +1,9 @@
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongo";
 import {
+  ChallengeDoc,
+  ChallengeParticipantDoc,
+  ChallengeLeaderboardEntry,
   LeaderboardCacheDoc,
   LeaderboardEntry,
   LeaderboardPeriod,
@@ -11,6 +14,8 @@ import {
 const usersCollection = "users";
 const statsCollection = "stats";
 const leaderboardCollection = "leaderboard_cache";
+const challengesCollection = "challenges";
+const challengeParticipantsCollection = "challenge_participants";
 
 export const upsertUser = async (user: UserDoc) => {
   const db = await getDb();
@@ -117,5 +122,178 @@ export const updateLeaderboardCache = async (
     .collection<LeaderboardCacheDoc>(leaderboardCollection)
     .updateOne({ period }, { $set: doc }, { upsert: true });
   return doc;
+};
+
+// Challenge Repository Functions
+export const createChallenge = async (challenge: ChallengeDoc) => {
+  const db = await getDb();
+  const doc: ChallengeDoc = {
+    ...challenge,
+    created_at: new Date().toISOString(),
+  };
+  const result = await db.collection<ChallengeDoc>(challengesCollection).insertOne(doc);
+  return { ...doc, _id: result.insertedId };
+};
+
+export const getChallengeById = async (id: string) => {
+  const db = await getDb();
+  return db
+    .collection<ChallengeDoc>(challengesCollection)
+    .findOne({ _id: new ObjectId(id) });
+};
+
+export const getActiveChallenges = async () => {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  return db
+    .collection<ChallengeDoc>(challengesCollection)
+    .find({
+      start_date: { $lte: now },
+      end_date: { $gte: now },
+    })
+    .sort({ created_at: -1 })
+    .toArray();
+};
+
+export const getUpcomingChallenges = async () => {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  return db
+    .collection<ChallengeDoc>(challengesCollection)
+    .find({
+      start_date: { $gt: now },
+    })
+    .sort({ start_date: 1 })
+    .toArray();
+};
+
+export const getAllChallenges = async () => {
+  const db = await getDb();
+  return db
+    .collection<ChallengeDoc>(challengesCollection)
+    .find()
+    .sort({ created_at: -1 })
+    .toArray();
+};
+
+export const joinChallenge = async (
+  challengeId: string,
+  userId: string
+): Promise<ChallengeParticipantDoc> => {
+  const db = await getDb();
+  const existing = await db
+    .collection<ChallengeParticipantDoc>(challengeParticipantsCollection)
+    .findOne({ challenge_id: challengeId, user_id: userId });
+
+  if (existing) {
+    return existing;
+  }
+
+  const participant: ChallengeParticipantDoc = {
+    challenge_id: challengeId,
+    user_id: userId,
+    joined_at: new Date().toISOString(),
+    progress: {
+      km_completed: 0,
+      minutes_completed: 0,
+      attempts_log: [],
+    },
+    completed: false,
+  };
+
+  const result = await db
+    .collection<ChallengeParticipantDoc>(challengeParticipantsCollection)
+    .insertOne(participant);
+  return { ...participant, _id: result.insertedId };
+};
+
+export const getChallengeParticipant = async (challengeId: string, userId: string) => {
+  const db = await getDb();
+  return db
+    .collection<ChallengeParticipantDoc>(challengeParticipantsCollection)
+    .findOne({ challenge_id: challengeId, user_id: userId });
+};
+
+export const getChallengeParticipants = async (challengeId: string) => {
+  const db = await getDb();
+  return db
+    .collection<ChallengeParticipantDoc>(challengeParticipantsCollection)
+    .find({ challenge_id: challengeId })
+    .toArray();
+};
+
+export const updateChallengeParticipantProgress = async (
+  challengeId: string,
+  userId: string,
+  progress: ChallengeParticipantDoc["progress"],
+  completed: boolean
+) => {
+  const db = await getDb();
+  await db
+    .collection<ChallengeParticipantDoc>(challengeParticipantsCollection)
+    .updateOne(
+      { challenge_id: challengeId, user_id: userId },
+      { $set: { progress, completed } }
+    );
+};
+
+export const getChallengeLeaderboard = async (
+  challengeId: string
+): Promise<ChallengeLeaderboardEntry[]> => {
+  const db = await getDb();
+  const participants = await getChallengeParticipants(challengeId);
+  const userIds = participants.map((p) => p.user_id);
+  const users = await db
+    .collection<UserDoc>(usersCollection)
+    .find({ _id: { $in: userIds.map((id) => new ObjectId(id)) } })
+    .toArray();
+
+  const userMap = new Map(users.map((u) => [u._id?.toString() ?? "", u]));
+  const challenge = await getChallengeById(challengeId);
+
+  if (!challenge) {
+    return [];
+  }
+
+  const entries: ChallengeLeaderboardEntry[] = participants
+    .map((participant) => {
+      const user = userMap.get(participant.user_id);
+      if (!user) return null;
+
+      let progressMetric = 0;
+      if (challenge.ruleset_type === "distance_total" || challenge.ruleset_type === "distance_recurring") {
+        progressMetric = participant.progress.km_completed;
+      } else if (challenge.ruleset_type === "duration_total" || challenge.ruleset_type === "duration_recurring") {
+        progressMetric = participant.progress.minutes_completed;
+      } else if (challenge.ruleset_type === "frequency_based") {
+        // Calculate frequency percentage
+        const weeks = Math.ceil(
+          (new Date(challenge.end_date).getTime() - new Date(challenge.start_date).getTime()) /
+            (7 * 24 * 60 * 60 * 1000)
+        );
+        const requiredRuns = (challenge.ruleset_config.required_frequency || 0) * weeks;
+        const actualRuns = participant.progress.attempts_log.length;
+        progressMetric = requiredRuns > 0 ? (actualRuns / requiredRuns) * 100 : 0;
+      }
+
+      return {
+        user_id: participant.user_id,
+        name: user.name,
+        startup_name: user.startup_name,
+        profile_image: user.profile_image,
+        progress_metric: progressMetric,
+        completed: participant.completed,
+        daily_status: participant.progress.daily_status,
+      };
+    })
+    .filter((e): e is ChallengeLeaderboardEntry => e !== null)
+    .sort((a, b) => {
+      if (a.completed !== b.completed) {
+        return a.completed ? -1 : 1;
+      }
+      return b.progress_metric - a.progress_metric;
+    });
+
+  return entries;
 };
 

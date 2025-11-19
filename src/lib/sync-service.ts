@@ -33,8 +33,11 @@ export const syncUserFromStrava = async (userId: string) => {
     });
   }
 
+  // Get existing stats to merge with new activities
+  const existingStats = await getStatsForUser(userId);
+  
   const activities = await fetchStravaActivities(accessToken!);
-  const stats = buildStatsFromActivities(userId, activities);
+  const stats = buildStatsFromActivities(userId, activities, existingStats || undefined);
   await upsertStats(stats);
   return stats;
 };

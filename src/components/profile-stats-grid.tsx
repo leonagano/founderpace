@@ -1,4 +1,4 @@
-import { formatKm, formatPace } from "@/lib/format";
+import { formatKm, formatPace, formatDuration } from "@/lib/format";
 
 type StatCard = {
   label: string;
@@ -10,15 +10,21 @@ type ProfileStatsGridProps = {
   totalKm?: number;
   last30Km?: number;
   avgPace?: number;
+  totalTime?: number; // Total time in seconds
 };
 
 export const ProfileStatsGrid = ({
   totalKm,
   last30Km,
   avgPace,
+  totalTime,
 }: ProfileStatsGridProps) => {
   const cards: StatCard[] = [
     { label: "Total KM", value: totalKm ? formatKm(totalKm) : "0 km" },
+    {
+      label: "Total time",
+      value: totalTime ? formatDuration(totalTime) : "0h",
+    },
     {
       label: "Last 30 days",
       value: last30Km ? formatKm(last30Km) : "0 km",
@@ -30,7 +36,7 @@ export const ProfileStatsGrid = ({
   ];
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => (
         <div
           key={card.label}

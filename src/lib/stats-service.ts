@@ -8,48 +8,67 @@ const buildHeatmapMatrix = () => Array.from({ length: 7 }, () => Array(24).fill(
 
 export const buildStatsFromActivities = (
   userId: string,
-  activities: StravaActivity[]
+  activities: StravaActivity[],
+  existingStats?: StatsDoc
 ): StatsDoc => {
   // Filter to only Run and VirtualRun (though strava.ts already filters these)
   // Also deduplicate by activity ID as a safety measure
   const seenIds = new Set<number>();
-  const runs = activities.filter((a) => {
+  const existingActivityIds = new Set(existingStats?.synced_activity_ids || []);
+  
+  // If we have existing stats, only process new activities
+  const activitiesToProcess = existingStats
+    ? activities.filter((a) => !existingActivityIds.has(a.id))
+    : activities;
+  
+  const runs = activitiesToProcess.filter((a) => {
     if (seenIds.has(a.id)) return false;
     seenIds.add(a.id);
     return a.type === "Run" || a.type === "VirtualRun";
   });
+  
+  // Get existing daily_activity to merge with
+  const existingDailyActivity = existingStats?.daily_activity || [];
+
+  // Process new runs (these are guaranteed to be new since we filtered by activity ID)
+  const newDailyActivities: DailyActivity[] = runs.map((activity) => {
+    const km = metersToKm(activity.distance);
+    const startLocal = activity.start_date_local;
+    const date = startLocal.split("T")[0];
+    
+    return {
+      date,
+      start_time_local: startLocal,
+      km: Number(km.toFixed(2)),
+      duration_seconds: Math.round(activity.moving_time),
+    };
+  });
+
+  // Merge new activities with existing ones (new activities are appended)
+  const daily_activity = [...existingDailyActivity, ...newDailyActivities].sort((a, b) =>
+    (a.start_time_local ?? "").localeCompare(b.start_time_local ?? "")
+  );
+  
+  // Rebuild heatmap from merged daily_activity
   const heatmap = buildHeatmapMatrix();
+  for (const entry of daily_activity) {
+    const startLocal = entry.start_time_local || "";
+    const date = entry.date;
+    const timePart = startLocal.split("T")[1];
+    const hour = timePart ? parseInt(timePart.split(":")[0], 10) : 0;
+    const [year, month, dayOfMonth] = date.split("-").map(Number);
+    const dt = new Date(Date.UTC(year, month - 1, dayOfMonth));
+    const day = dt.getUTCDay();
+    heatmap[day][hour] = Number((heatmap[day][hour] + entry.km).toFixed(2));
+  }
+  
+  // Update synced activity IDs
+  const newActivityIds = runs.map((a) => a.id);
+  const synced_activity_ids = existingStats?.synced_activity_ids
+    ? [...existingStats.synced_activity_ids, ...newActivityIds]
+    : newActivityIds;
 
-  const daily_activity: DailyActivity[] = runs
-    .map((activity) => {
-      const km = metersToKm(activity.distance);
-      // Use start_date_local which Strava provides in the user's timezone at time of activity
-      // Format: "YYYY-MM-DDTHH:mm:ss" (local time, no timezone)
-      const startLocal = activity.start_date_local;
-      const date = startLocal.split("T")[0];
-
-      // Parse the local time string directly - don't use Date() as it converts to server timezone
-      // Extract hour and day directly from the ISO string
-      const timePart = startLocal.split("T")[1]; // "HH:mm:ss"
-      const hour = parseInt(timePart.split(":")[0], 10);
-      
-      // For day of week, we need to parse the date, but use UTC methods to avoid timezone conversion
-      // Parse date as YYYY-MM-DD and get day of week
-      const [year, month, dayOfMonth] = date.split("-").map(Number);
-      const dt = new Date(Date.UTC(year, month - 1, dayOfMonth));
-      const day = dt.getUTCDay();
-      
-      heatmap[day][hour] = Number((heatmap[day][hour] + km).toFixed(2));
-
-      return {
-        date,
-        start_time_local: startLocal,
-        km: Number(km.toFixed(2)),
-        duration_seconds: Math.round(activity.moving_time),
-      };
-    })
-    .sort((a, b) => (a.start_time_local ?? "").localeCompare(b.start_time_local ?? ""));
-
+  // Calculate totals from merged daily_activity
   const totals = daily_activity.reduce(
     (acc, entry) => {
       acc.km += entry.km;
@@ -75,6 +94,7 @@ export const buildStatsFromActivities = (
     daily_activity,
     activity_heatmap: heatmap,
     computed_at: new Date().toISOString(),
+    synced_activity_ids,
   };
 };
 
