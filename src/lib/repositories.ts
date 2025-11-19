@@ -276,7 +276,7 @@ export const getChallengeLeaderboard = async (
         progressMetric = requiredRuns > 0 ? (actualRuns / requiredRuns) * 100 : 0;
       }
 
-      return {
+      const entry: ChallengeLeaderboardEntry = {
         user_id: participant.user_id,
         name: user.name,
         startup_name: user.startup_name,
@@ -285,6 +285,7 @@ export const getChallengeLeaderboard = async (
         completed: participant.completed,
         daily_status: participant.progress.daily_status,
       };
+      return entry;
     })
     .filter((e): e is ChallengeLeaderboardEntry => e !== null)
     .sort((a, b) => {
@@ -292,7 +293,7 @@ export const getChallengeLeaderboard = async (
         return a.completed ? -1 : 1;
       }
       return b.progress_metric - a.progress_metric;
-    }) as ChallengeLeaderboardEntry[];
+    });
 
   return entries;
 };
