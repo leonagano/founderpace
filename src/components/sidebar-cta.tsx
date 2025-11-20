@@ -39,7 +39,7 @@ export const SidebarCta = ({ authorizeUrl, advertiseUrl }: SidebarCtaProps) => {
         </div>
         <div className="rounded-2xl border border-dashed border-neutral-200/80 p-4 text-center">
           <p className="text-xs text-neutral-700">
-            Private leaderboards and challenges for teams/companies are supported.{" "}
+            Do you want to create a private leaderboard/challenges for your company?{" "}
             <Link
               href="/founder/leo-nagano"
               className="text-neutral-900 underline hover:text-neutral-700"
@@ -90,8 +90,8 @@ export const SidebarCta = ({ authorizeUrl, advertiseUrl }: SidebarCtaProps) => {
         </Link>
       </div>
       <div className="rounded-2xl border border-dashed border-neutral-200/80 p-4 text-center">
-        <p className="text-xs text-neutral-500">
-          Private leaderboards and challenges for teams/companies are supported.{" "}
+        <p className="text-xs text-neutral-700">
+          Do you want to create a private leaderboard/challenges for your company?{" "}
           <Link
             href="/founder/leo-nagano"
             className="text-neutral-900 underline hover:text-neutral-700"
