@@ -103,10 +103,6 @@ function StravaCallbackContent() {
               <h1 className="mt-2 text-2xl font-semibold text-neutral-500">
                 Add your socials below so other founders can reach you
               </h1>
-              <p className="mt-3 rounded-xl bg-neutral-50 p-3 text-sm text-neutral-600">
-                Quick heads-up: once you hit save, you won&apos;t be able to edit these again
-                without pinging me (edit your profile is coming later).
-              </p>
               <p className="mt-2 text-xs text-neutral-400">
                 Privacy: We respect your privacy. We only store date/time started, distance, and run
                 duration. No location data is collected or stored.
