@@ -73,8 +73,8 @@ export const ChallengeLeaderboard = ({ entries, challenge }: ChallengeLeaderboar
       <table className="min-w-full divide-y divide-neutral-100 text-left text-sm sm:text-base">
         <thead className="bg-neutral-50 text-xs font-semibold uppercase tracking-wider text-neutral-500 sm:text-sm">
           <tr>
-            <th className="sticky left-0 z-10 bg-neutral-50 px-4 py-3 sm:px-6" style={{ width: '80px', minWidth: '80px' }}>Rank</th>
-            <th className="sticky left-[80px] z-10 bg-neutral-50 px-4 py-3 sm:px-6" style={{ width: '250px', minWidth: '250px' }}>Founder</th>
+            <th className="px-4 py-3 sm:sticky sm:left-0 sm:z-10 sm:bg-neutral-50 sm:px-6" style={{ width: '80px', minWidth: '80px' }}>Rank</th>
+            <th className="px-4 py-3 sm:sticky sm:left-[80px] sm:z-10 sm:bg-neutral-50 sm:px-6" style={{ width: '250px', minWidth: '250px' }}>Founder</th>
             <th className="px-4 py-3 sm:px-6">Startup</th>
             <th className="px-4 py-3 sm:px-6 text-right">{getMetricLabel()}</th>
             {isRecurring && requiredDays.length > 0 && (
@@ -96,12 +96,12 @@ export const ChallengeLeaderboard = ({ entries, challenge }: ChallengeLeaderboar
         <tbody className="divide-y divide-neutral-100 bg-white text-neutral-800">
           {entries.map((entry, idx) => (
             <tr key={entry.user_id} className="group transition hover:bg-neutral-50/80">
-              <td className="sticky left-0 z-10 bg-white px-4 py-4 text-sm font-semibold text-neutral-500 transition group-hover:bg-neutral-50/80 sm:px-6" style={{ width: '80px', minWidth: '80px' }}>
+              <td className="px-4 py-4 text-sm font-semibold text-neutral-500 transition sm:sticky sm:left-0 sm:z-10 sm:bg-white sm:group-hover:bg-neutral-50/80 sm:px-6" style={{ width: '80px', minWidth: '80px' }}>
                 #{idx + 1}
               </td>
-              <td className="sticky left-[80px] z-10 bg-white px-4 py-4 transition group-hover:bg-neutral-50/80 sm:px-6" style={{ width: '250px', minWidth: '250px' }}>
+              <td className="px-4 py-4 transition sm:sticky sm:left-[80px] sm:z-10 sm:bg-white sm:group-hover:bg-neutral-50/80 sm:px-6" style={{ width: '250px', minWidth: '250px' }}>
                 <Link
-                  href={`/founder/${entry.user_id}`}
+                  href={entry.slug ? `/founder/${entry.slug}` : `/founder/${entry.user_id}`}
                   className="flex items-center gap-3"
                 >
                   <div className="relative h-10 w-10 overflow-hidden rounded-full bg-neutral-200">

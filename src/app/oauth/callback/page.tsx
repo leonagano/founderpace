@@ -45,6 +45,8 @@ function StravaCallbackContent() {
         // Store userId in localStorage for profile editing
         if (typeof window !== "undefined" && json.userId) {
           localStorage.setItem("founderpace_userId", json.userId);
+          // Dispatch custom event to notify TopNav
+          window.dispatchEvent(new Event("localStorageChange"));
         }
         setState({ status: "success", userId: json.userId });
       } catch {
@@ -84,63 +86,81 @@ function StravaCallbackContent() {
   }, [state]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-6">
-      <div className="w-full max-w-lg rounded-2xl border border-neutral-200 bg-white p-10 text-center">
-        {state.status === "loading" && (
-          <>
-            <h1 className="text-2xl font-semibold text-neutral-900">Syncing Strava…</h1>
-            <p className="mt-2 text-sm text-neutral-500">
-              We are fetching your verified runs and building your stats.
-            </p>
-          </>
-        )}
-        {state.status === "success" && (
-          <>
-            <h2 className="text-neutral-900">All synced....</h2>
-            <h1 className="mt-2 text-2xl font-semibold text-neutral-500">
-              Add your socials below so other founders can reach you
-            </h1>
-            <p className="mt-4 rounded-xl bg-neutral-50 p-4 text-sm text-neutral-600">
-              Quick heads-up: once you hit save, you won&apos;t be able to edit these again
-              without pinging me (edit your profile is coming later).
-            </p>
-            <p className="mt-3 text-xs text-neutral-400">
-              Privacy: We respect your privacy. We only store date/time started, distance, and run
-              duration. No location data is collected or stored.
-            </p>
-            <div className="mt-6 text-left">
-              {profileLoading && (
-                <div className="rounded-2xl border border-dashed border-neutral-200 p-6 text-center text-sm text-neutral-500">
-                  Loading your details…
-                </div>
-              )}
+    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-6 py-6">
+      <div className="flex h-full max-h-[90vh] w-full max-w-lg flex-col rounded-2xl border border-neutral-200 bg-white text-center">
+        <div className="flex-1 overflow-y-auto p-10">
+          {state.status === "loading" && (
+            <>
+              <h1 className="text-2xl font-semibold text-neutral-900">Syncing Strava…</h1>
+              <p className="mt-2 text-sm text-neutral-500">
+                We are fetching your verified runs and building your stats.
+              </p>
+            </>
+          )}
+          {state.status === "success" && (
+            <>
+              <h2 className="text-neutral-900">All synced....</h2>
+              <h1 className="mt-2 text-2xl font-semibold text-neutral-500">
+                Add your socials below so other founders can reach you
+              </h1>
+              <p className="mt-3 rounded-xl bg-neutral-50 p-3 text-sm text-neutral-600">
+                Quick heads-up: once you hit save, you won&apos;t be able to edit these again
+                without pinging me (edit your profile is coming later).
+              </p>
+              <p className="mt-2 text-xs text-neutral-400">
+                Privacy: We respect your privacy. We only store date/time started, distance, and run
+                duration. No location data is collected or stored.
+              </p>
+              <div className="mt-4 text-left">
+                {profileLoading && (
+                  <div className="rounded-2xl border border-dashed border-neutral-200 p-6 text-center text-sm text-neutral-500">
+                    Loading your details…
+                  </div>
+                )}
               {!profileLoading && (
                 <SocialsForm
                   userId={state.userId}
                   initialSocials={profileInfo?.socials}
                   initialStartupName={profileInfo?.startupName}
+                  showButton={true}
                 />
               )}
-            </div>
+              </div>
+            </>
+          )}
+          {state.status === "error" && (
+            <>
+              <h1 className="text-2xl font-semibold text-red-600">Something failed</h1>
+              <p className="mt-2 text-sm text-neutral-500">{state.message}</p>
+            </>
+          )}
+        </div>
+        {state.status === "success" && !profileLoading && (
+          <div className="border-t border-neutral-200 bg-white p-4 space-y-2">
+            <button
+              type="submit"
+              form="socials-form"
+              className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+            >
+              Save socials
+            </button>
             <Link
               href="/"
-              className="mt-6 inline-flex w-full items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700"
+              className="inline-flex w-full items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
             >
               Back to leaderboard
             </Link>
-          </>
+          </div>
         )}
         {state.status === "error" && (
-          <>
-            <h1 className="text-2xl font-semibold text-red-600">Something failed</h1>
-            <p className="mt-2 text-sm text-neutral-500">{state.message}</p>
+          <div className="border-t border-neutral-200 bg-white p-4">
             <Link
               href="/"
-              className="mt-6 inline-flex items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700"
+              className="inline-flex w-full items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
             >
               Try again
             </Link>
-          </>
+          </div>
         )}
       </div>
     </div>

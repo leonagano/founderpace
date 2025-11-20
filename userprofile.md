@@ -2,6 +2,9 @@ User Profile — PRD - edit
 
 Profile Requirements
 
+
+Add a menu item, where user can edit their profile.
+
 Fields
 	•	name (editable)
 	•	startup_name  (editable)

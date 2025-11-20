@@ -112,28 +112,28 @@ export default function CreateChallengePage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-10 lg:px-0">
-      <Link href="/" className="flex items-center gap-3">
+    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10 lg:px-0">
+      <Link href="/" className="flex items-center gap-2 sm:gap-3 pr-20 sm:pr-0">
         <Image
           src="/icon_transparent.png"
           alt="FounderPace icon"
           width={56}
           height={56}
           priority
-          className="h-14 w-14"
+          className="h-10 w-10 sm:h-14 sm:w-14"
         />
-        <span className="text-sm font-semibold uppercase tracking-[0.4em] text-neutral-500">
+        <span className="text-xs font-semibold uppercase tracking-[0.4em] text-neutral-500 sm:text-sm">
           FounderPace
         </span>
       </Link>
 
-      <Link href="/challenges" className="text-sm text-neutral-500 hover:text-neutral-900">
+      <Link href="/challenges" className="text-xs text-neutral-500 hover:text-neutral-900 sm:text-sm">
         ← Back to challenges
       </Link>
 
-      <h1 className="text-4xl font-semibold text-neutral-900">Create Challenge</h1>
+      <h1 className="text-3xl font-semibold text-neutral-900 sm:text-4xl">Create Challenge</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-8">
+      <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-6 sm:p-8">
         <div>
           <label className="block text-sm font-medium text-neutral-700">
             Title *
@@ -291,7 +291,7 @@ export default function CreateChallengePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-neutral-700">
               Start Date *

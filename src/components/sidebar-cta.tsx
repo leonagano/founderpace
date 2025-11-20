@@ -27,6 +27,7 @@ export const SidebarCta = ({ authorizeUrl, advertiseUrl }: SidebarCtaProps) => {
       <aside className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-6">
         <div className="rounded-2xl border border-dashed border-neutral-200/80 p-4 text-center">
           <p className="text-sm font-semibold text-neutral-900">Advertise</p>
+          <p className="mt-1 text-xs text-neutral-500">30-day sponsorship</p>
           <Link
             href={advertiseUrl ?? "mailto:hello@founderpace.com"}
             target="_blank"
@@ -35,6 +36,17 @@ export const SidebarCta = ({ authorizeUrl, advertiseUrl }: SidebarCtaProps) => {
           >
             Book a slot
           </Link>
+        </div>
+        <div className="rounded-2xl border border-dashed border-neutral-200/80 p-4 text-center">
+          <p className="text-xs text-neutral-700">
+            Private leaderboards and challenges for teams/companies are supported.{" "}
+            <Link
+              href="/founder/leo-nagano"
+              className="text-neutral-900 underline hover:text-neutral-700"
+            >
+              Contact me
+            </Link>
+          </p>
         </div>
       </aside>
     );
@@ -67,6 +79,7 @@ export const SidebarCta = ({ authorizeUrl, advertiseUrl }: SidebarCtaProps) => {
       )}
       <div className="rounded-2xl border border-dashed border-neutral-200/80 p-4 text-center">
         <p className="text-sm font-semibold text-neutral-900">Advertise</p>
+        <p className="mt-1 text-xs text-neutral-500">30-day sponsorship</p>
         <Link
           href={advertiseUrl ?? "mailto:hello@founderpace.com"}
           target="_blank"
@@ -75,6 +88,17 @@ export const SidebarCta = ({ authorizeUrl, advertiseUrl }: SidebarCtaProps) => {
         >
           Book a slot
         </Link>
+      </div>
+      <div className="rounded-2xl border border-dashed border-neutral-200/80 p-4 text-center">
+        <p className="text-xs text-neutral-500">
+          Private leaderboards and challenges for teams/companies are supported.{" "}
+          <Link
+            href="/founder/leo-nagano"
+            className="text-neutral-900 underline hover:text-neutral-700"
+          >
+            Contact me
+          </Link>
+        </p>
       </div>
     </aside>
   );

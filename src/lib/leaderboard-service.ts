@@ -79,6 +79,7 @@ const hydrateEntries = async (period: LeaderboardPeriod) => {
             : 0;
       return {
         user_id: stat.user_id,
+        slug: user.slug,
         name: user.name,
         startup_name: user.startup_name,
         profile_image: user.profile_image,

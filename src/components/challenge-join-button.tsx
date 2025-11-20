@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 
 type ChallengeJoinButtonProps = {
   challengeId: string;
+  authorizeUrl?: string;
 };
 
-export const ChallengeJoinButton = ({ challengeId }: ChallengeJoinButtonProps) => {
+export const ChallengeJoinButton = ({ challengeId, authorizeUrl }: ChallengeJoinButtonProps) => {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [isJoined, setIsJoined] = useState(false);
@@ -70,6 +73,20 @@ export const ChallengeJoinButton = ({ challengeId }: ChallengeJoinButtonProps) =
     return (
       <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center">
         <p className="text-sm text-neutral-600">Please log in to join this challenge</p>
+        {authorizeUrl && (
+          <Link
+            href={authorizeUrl}
+            className="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-neutral-200 p-1"
+          >
+            <Image
+              src="/btn_strava_connect_with_white.png"
+              alt="Connect with Strava"
+              width={193}
+              height={48}
+              className="h-auto w-full max-w-[193px]"
+            />
+          </Link>
+        )}
       </div>
     );
   }

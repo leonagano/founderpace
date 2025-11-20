@@ -1,7 +1,7 @@
 # FounderPace — Challenges PRD
 
 ## Purpose
-Introduce structured, Strava-verified challenges to increase repeat engagement, create sponsor inventory, and strengthen founder-to-founder identity loops.
+Introduce structured challenges to increase repeat engagement, create sponsor inventory, and strengthen founder-to-founder identity loops.
 
 ## Core Rule
 Participation requires an existing FounderPace profile. No profile → no challenge creation → no joining.
@@ -25,7 +25,6 @@ Participation requires an existing FounderPace profile. No profile → no challe
   - required_frequency  
 - start_date  
 - end_date  
-- visibility (`public`, `invite_only`)  
 - sponsor:  
   - name  
   - logo_url  
@@ -103,9 +102,6 @@ No custom logic injection. No arbitrary rule builders. No multi-branch rules.
 - Progress metric (km, minutes, or frequency %)  
 - Completion indicator
 
-**Progress Graph**  
-- Line graph comparing expected trajectory vs actual
-
 **Daily Log (readonly)**  
 - Auto-generated from Strava  
 - No manual edits
@@ -164,7 +160,7 @@ All require auth except public challenge listing.
 - Rules must map directly to Strava metrics (distance, moving_time, activity count).  
 - No mixed-metric challenges.  
 - No manual submissions.  
-- No backdating creation; challenges start today or later.
+- No backdating creation; challenges start today or later.c
 
 ---
 

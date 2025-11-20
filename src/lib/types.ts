@@ -11,6 +11,7 @@ export type UserDoc = {
   _id?: ObjectId;
   strava_id: string;
   name: string;
+  slug?: string; // URL-friendly slug based on name
   startup_name?: string;
   profile_image?: string;
   socials?: Socials;
@@ -43,6 +44,7 @@ export type StatsDoc = {
 
 export type LeaderboardEntry = {
   user_id: string;
+  slug?: string; // URL-friendly slug for profile links
   startup_name?: string;
   total_km: number;
   avg_pace: number;
@@ -123,6 +125,7 @@ export type ChallengeParticipantDoc = {
 
 export type ChallengeLeaderboardEntry = {
   user_id: string;
+  slug?: string; // URL-friendly slug for profile links
   name: string;
   startup_name?: string;
   profile_image?: string;

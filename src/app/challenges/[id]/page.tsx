@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { getChallengeById, getChallengeLeaderboard, getChallengeParticipant } from "@/lib/repositories";
 import { ChallengeLeaderboard } from "@/components/challenge-leaderboard";
 import { ChallengeJoinButton } from "@/components/challenge-join-button";
+import { buildStravaAuthorizeUrl } from "@/lib/urls";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -37,29 +38,29 @@ export default async function ChallengeDetailPage({ params }: PageProps) {
   };
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10 lg:px-0">
-      <Link href="/" className="flex items-center gap-3">
+    <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10 lg:px-0">
+      <Link href="/" className="flex items-center gap-2 sm:gap-3 pr-20 sm:pr-0">
         <Image
           src="/icon_transparent.png"
           alt="FounderPace icon"
           width={56}
           height={56}
           priority
-          className="h-14 w-14"
+          className="h-10 w-10 sm:h-14 sm:w-14"
         />
-        <span className="text-sm font-semibold uppercase tracking-[0.4em] text-neutral-500">
+        <span className="text-xs font-semibold uppercase tracking-[0.4em] text-neutral-500 sm:text-sm">
           FounderPace
         </span>
       </Link>
 
-      <Link href="/challenges" className="text-sm text-neutral-500 hover:text-neutral-900">
+      <Link href="/challenges" className="text-xs text-neutral-500 hover:text-neutral-900 sm:text-sm">
         ← Back to challenges
       </Link>
 
-      <div className="rounded-3xl border border-neutral-200 bg-white p-8">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6 sm:rounded-3xl sm:p-8">
         <div className="mb-6">
-          <h1 className="text-4xl font-semibold text-neutral-900">{challenge.title}</h1>
-          <p className="mt-2 text-neutral-600">{challenge.description}</p>
+          <h1 className="text-2xl font-semibold text-neutral-900 sm:text-3xl lg:text-4xl">{challenge.title}</h1>
+          <p className="mt-2 text-sm text-neutral-600 sm:text-base">{challenge.description}</p>
         </div>
 
         {challenge.sponsor && (
@@ -72,7 +73,8 @@ export default async function ChallengeDetailPage({ params }: PageProps) {
               <img
                 src={challenge.sponsor.logo_url}
                 alt={challenge.sponsor.name || "Sponsor"}
-                className="mb-4 h-auto max-h-16 w-auto max-w-[120px]"
+                className="mb-4 h-auto max-h-16 w-auto max-w-[120px] object-contain"
+                style={{ maxHeight: '64px', maxWidth: '120px', height: 'auto', width: 'auto' }}
               />
             )}
             {challenge.sponsor.prize_description && (
@@ -91,7 +93,7 @@ export default async function ChallengeDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        <div className="mb-6 grid grid-cols-2 gap-4 text-sm">
+        <div className="mb-6 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 sm:gap-4 sm:text-sm">
           <div>
             <span className="text-neutral-500">Start Date:</span>
             <span className="ml-2 font-semibold text-neutral-900">
@@ -104,17 +106,17 @@ export default async function ChallengeDetailPage({ params }: PageProps) {
               {format(new Date(challenge.end_date), "MMM d, yyyy")}
             </span>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 sm:col-span-2">
             <span className="text-neutral-500">Rules:</span>
             <span className="ml-2 font-semibold text-neutral-900">{getRulesSummary()}</span>
           </div>
         </div>
 
-        <ChallengeJoinButton challengeId={id} />
+        <ChallengeJoinButton challengeId={id} authorizeUrl={buildStravaAuthorizeUrl()} />
       </div>
 
       <div>
-        <h2 className="mb-4 text-2xl font-semibold text-neutral-900">Leaderboard</h2>
+        <h2 className="mb-4 text-xl font-semibold text-neutral-900 sm:text-2xl">Leaderboard</h2>
         <ChallengeLeaderboard entries={leaderboard} challenge={challenge} />
       </div>
     </div>

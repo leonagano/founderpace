@@ -8,6 +8,7 @@ type SocialsFormProps = {
   userId: string;
   initialSocials?: Socials;
   initialStartupName?: string;
+  showButton?: boolean;
 };
 
 const sanitizeHandle = (value: string) => {
@@ -42,6 +43,7 @@ export const SocialsForm = ({
   userId,
   initialSocials,
   initialStartupName,
+  showButton = true,
 }: SocialsFormProps) => {
   const router = useRouter();
   const [socials, setSocials] = useState<Socials>({
@@ -112,12 +114,12 @@ export const SocialsForm = ({
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-6">
+    <form id="socials-form" onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-4">
       <div>
         <h4 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
           Social links
         </h4>
-        <p className="text-sm text-neutral-500">
+        <p className="mt-1 text-xs text-neutral-500">
           Optional but public. Update your social links and startup name below.
         </p>
       </div>
@@ -142,14 +144,18 @@ export const SocialsForm = ({
           {helper && <span className="text-xs text-neutral-400">{helper}</span>}
         </label>
       ))}
-      <button
-        type="submit"
-        disabled={isPending}
-        className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-      >
-        {isPending ? "Saving..." : "Save socials"}
-      </button>
-      {message && <p className="text-center text-xs text-neutral-500">{message}</p>}
+      {showButton && (
+        <>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {isPending ? "Saving..." : "Save socials"}
+          </button>
+          {message && <p className="text-center text-xs text-neutral-500">{message}</p>}
+        </>
+      )}
     </form>
   );
 };

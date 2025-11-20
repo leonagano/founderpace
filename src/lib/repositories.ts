@@ -10,6 +10,7 @@ import {
   StatsDoc,
   UserDoc,
 } from "@/lib/types";
+import { nameToSlug, generateUniqueSlug } from "@/lib/slug";
 
 const usersCollection = "users";
 const statsCollection = "stats";
@@ -21,12 +22,34 @@ export const upsertUser = async (user: UserDoc) => {
   const db = await getDb();
   const { strava_id, ...rest } = user;
   const { created_at, ...upsertFields } = rest;
+  
+  // Check if user already exists
+  const existingUser = await db.collection<UserDoc>(usersCollection).findOne({ strava_id });
+  
+  // Generate slug if name changed or user is new
+  let slug = existingUser?.slug;
+  if (!slug || existingUser?.name !== user.name) {
+    const baseSlug = nameToSlug(user.name);
+    slug = await generateUniqueSlug(
+      baseSlug,
+      async (s, excludeId) => {
+        const existing = await db.collection<UserDoc>(usersCollection).findOne({ slug: s });
+        if (!existing) return false;
+        // If updating existing user, exclude their own ID
+        if (excludeId && existing._id?.toString() === excludeId) return false;
+        return true;
+      },
+      existingUser?._id?.toString()
+    );
+  }
+  
   const result = await db.collection<UserDoc>(usersCollection).findOneAndUpdate(
     { strava_id },
     {
       $set: {
         ...upsertFields,
         strava_id,
+        slug,
         updated_at: new Date().toISOString(),
       },
       $setOnInsert: {
@@ -72,6 +95,11 @@ export const getUserById = async (id: string) => {
   return db
     .collection<UserDoc>(usersCollection)
     .findOne({ _id: new ObjectId(id) });
+};
+
+export const getUserBySlug = async (slug: string) => {
+  const db = await getDb();
+  return db.collection<UserDoc>(usersCollection).findOne({ slug });
 };
 
 export const getUserByStravaId = async (stravaId: string) => {
@@ -155,6 +183,35 @@ export const getActiveChallenges = async () => {
     .toArray();
 };
 
+export const getActiveChallengesWithParticipantCounts = async (limit?: number) => {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  const challenges = await db
+    .collection<ChallengeDoc>(challengesCollection)
+    .find({
+      start_date: { $lte: now },
+      end_date: { $gte: now },
+    })
+    .toArray();
+
+  // Get participant counts for each challenge
+  const challengesWithCounts = await Promise.all(
+    challenges.map(async (challenge) => {
+      const participants = await db
+        .collection<ChallengeParticipantDoc>(challengeParticipantsCollection)
+        .countDocuments({ challenge_id: challenge._id?.toString() ?? "" });
+      return {
+        challenge,
+        participantCount: participants,
+      };
+    })
+  );
+
+  // Sort by participant count (descending) and limit
+  const sorted = challengesWithCounts.sort((a, b) => b.participantCount - a.participantCount);
+  return limit ? sorted.slice(0, limit) : sorted;
+};
+
 export const getUpcomingChallenges = async () => {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -164,6 +221,18 @@ export const getUpcomingChallenges = async () => {
       start_date: { $gt: now },
     })
     .sort({ start_date: 1 })
+    .toArray();
+};
+
+export const getCompletedChallenges = async () => {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  return db
+    .collection<ChallengeDoc>(challengesCollection)
+    .find({
+      end_date: { $lt: now },
+    })
+    .sort({ end_date: -1 })
     .toArray();
 };
 
@@ -222,6 +291,34 @@ export const getChallengeParticipants = async (challengeId: string) => {
     .toArray();
 };
 
+export const getUserChallenges = async (userId: string) => {
+  const db = await getDb();
+  const participants = await db
+    .collection<ChallengeParticipantDoc>(challengeParticipantsCollection)
+    .find({ user_id: userId })
+    .toArray();
+
+  // Get challenge details for each participant
+  const challengeIds = participants.map((p) => new ObjectId(p.challenge_id));
+  const challenges = await db
+    .collection<ChallengeDoc>(challengesCollection)
+    .find({ _id: { $in: challengeIds } })
+    .toArray();
+
+  // Combine challenge and participant data
+  const challengeMap = new Map(challenges.map((c) => [c._id?.toString() ?? "", c]));
+  return participants
+    .map((participant) => {
+      const challenge = challengeMap.get(participant.challenge_id);
+      if (!challenge) return null;
+      return {
+        challenge,
+        participant,
+      };
+    })
+    .filter((item): item is { challenge: typeof challenges[0]; participant: typeof participants[0] } => item !== null);
+};
+
 export const updateChallengeParticipantProgress = async (
   challengeId: string,
   userId: string,
@@ -278,6 +375,7 @@ export const getChallengeLeaderboard = async (
 
       const entry: ChallengeLeaderboardEntry = {
         user_id: participant.user_id,
+        slug: user.slug,
         name: user.name,
         startup_name: user.startup_name,
         profile_image: user.profile_image,
