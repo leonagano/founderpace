@@ -5,8 +5,8 @@ export const buildStravaAuthorizeUrl = (state?: string) => {
   url.searchParams.set("client_id", env.STRAVA_CLIENT_ID);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("redirect_uri", env.STRAVA_REDIRECT_URI);
-  url.searchParams.set("scope", "read,activity:read_all");
-  url.searchParams.set("approval_prompt", "auto");
+  url.searchParams.set("scope", "activity:read_all");
+  url.searchParams.set("approval_prompt", "force");
   if (state) {
     url.searchParams.set("state", state);
   }
