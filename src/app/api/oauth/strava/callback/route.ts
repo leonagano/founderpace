@@ -39,7 +39,25 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ userId });
   } catch (error) {
-    console.error(error);
+    console.error("OAuth callback error:", error);
+    
+    // Check if this is a permission error - check code, message, or error string
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode = error instanceof Error ? (error as Error & { code?: string }).code : undefined;
+    
+    const isPermissionError =
+      errorCode === "PRIVATE_ACTIVITIES_REQUIRED" ||
+      errorMessage === "PRIVATE_ACTIVITIES_REQUIRED" ||
+      errorMessage.includes("Failed to fetch activities (401)");
+    
+    if (isPermissionError) {
+      console.log("Detected permission error (401), returning 403");
+      return NextResponse.json(
+        { error: "PRIVATE_ACTIVITIES_REQUIRED", message: "Please enable 'View data about your private activities' permission in Strava" },
+        { status: 403 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to complete Strava onboarding" },
       { status: 500 }

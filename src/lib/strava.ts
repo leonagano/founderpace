@@ -84,6 +84,13 @@ export const fetchStravaActivities = async (accessToken: string) => {
     });
 
     if (!res.ok) {
+      if (res.status === 401) {
+        const error: Error & { code: string; statusCode: number } = Object.assign(
+          new Error("PRIVATE_ACTIVITIES_REQUIRED"),
+          { code: "PRIVATE_ACTIVITIES_REQUIRED", statusCode: 401 }
+        );
+        throw error;
+      }
       throw new Error(`Failed to fetch activities (${res.status})`);
     }
 

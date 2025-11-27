@@ -9,12 +9,13 @@ import { Socials } from "@/lib/types";
 type State =
   | { status: "loading" }
   | { status: "success"; userId: string }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string; isPermissionError?: boolean };
 
 function StravaCallbackContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
   const errorMessage = searchParams.get("error");
+  const [authorizeUrl, setAuthorizeUrl] = useState<string | null>(null);
   const [state, setState] = useState<State>(() => {
     if (errorMessage) {
       return { status: "error", message: errorMessage };
@@ -24,6 +25,22 @@ function StravaCallbackContent() {
     }
     return { status: "loading" };
   });
+
+  // Fetch authorization URL for retry button
+  useEffect(() => {
+    const fetchAuthorizeUrl = async () => {
+      try {
+        const res = await fetch("/api/oauth/strava/authorize-url");
+        if (res.ok) {
+          const json = await res.json();
+          setAuthorizeUrl(json.authorizeUrl);
+        }
+      } catch {
+        // Ignore errors
+      }
+    };
+    fetchAuthorizeUrl();
+  }, []);
 
   useEffect(() => {
     if (!code || errorMessage) {
@@ -38,6 +55,16 @@ function StravaCallbackContent() {
           body: JSON.stringify({ code }),
         });
         if (!res.ok) {
+          const json = await res.json();
+          // Check if this is a permission error
+          if (json.error === "PRIVATE_ACTIVITIES_REQUIRED") {
+            setState({ 
+              status: "error", 
+              message: "Please enable 'View data about your private activities' permission in Strava",
+              isPermissionError: true 
+            });
+            return;
+          }
           setState({ status: "error", message: "Unable to finish onboarding" });
           return;
         }
@@ -126,8 +153,25 @@ function StravaCallbackContent() {
           )}
           {state.status === "error" && (
             <>
-              <h1 className="text-2xl font-semibold text-red-600">Something failed</h1>
+              <h1 className="text-2xl font-semibold text-red-600">
+                {state.isPermissionError ? "Permission Required" : "Something failed"}
+              </h1>
               <p className="mt-2 text-sm text-neutral-500">{state.message}</p>
+              {state.isPermissionError && (
+                <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-left">
+                  <p className="text-sm font-semibold text-neutral-900">What to do:</p>
+                  <ol className="mt-2 list-decimal list-inside space-y-1 text-sm text-neutral-600">
+                    <li>Go to your Strava account settings</li>
+                    <li>Navigate to "My API Application" or revoke and reconnect</li>
+                    <li>Make sure to check the box for "View data about your private activities"</li>
+                    <li>Try connecting again</li>
+                  </ol>
+                  <p className="mt-4 text-xs text-neutral-500">
+                    <strong>Privacy note:</strong> FounderPace only stores run date/time, duration, and distance. 
+                    We do not collect or store any location data or other personal information.
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -149,12 +193,20 @@ function StravaCallbackContent() {
           </div>
         )}
         {state.status === "error" && (
-          <div className="border-t border-neutral-200 bg-white p-4">
+          <div className="border-t border-neutral-200 bg-white p-4 space-y-2">
+            {state.isPermissionError && authorizeUrl ? (
+              <Link
+                href={authorizeUrl}
+                className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+              >
+                Reconnect with Strava
+              </Link>
+            ) : null}
             <Link
               href="/"
               className="inline-flex w-full items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
             >
-              Try again
+              {state.isPermissionError ? "Back to leaderboard" : "Try again"}
             </Link>
           </div>
         )}

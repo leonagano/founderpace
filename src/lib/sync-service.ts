@@ -36,10 +36,26 @@ export const syncUserFromStrava = async (userId: string) => {
   // Get existing stats to merge with new activities
   const existingStats = await getStatsForUser(userId);
   
-  const activities = await fetchStravaActivities(accessToken!);
-  const stats = buildStatsFromActivities(userId, activities, existingStats || undefined);
-  await upsertStats(stats);
-  return stats;
+  try {
+    const activities = await fetchStravaActivities(accessToken!);
+    const stats = buildStatsFromActivities(userId, activities, existingStats || undefined);
+    await upsertStats(stats);
+    return stats;
+  } catch (error) {
+    // Re-throw permission errors with a specific code
+    if (
+      error instanceof Error &&
+      ((error as Error & { code?: string }).code === "PRIVATE_ACTIVITIES_REQUIRED" ||
+        error.message === "PRIVATE_ACTIVITIES_REQUIRED")
+    ) {
+      const permissionError: Error & { code: string } = Object.assign(
+        new Error("PRIVATE_ACTIVITIES_REQUIRED"),
+        { code: "PRIVATE_ACTIVITIES_REQUIRED" }
+      );
+      throw permissionError;
+    }
+    throw error;
+  }
 };
 
 export const ensureUserStats = async (userId: string) => {
