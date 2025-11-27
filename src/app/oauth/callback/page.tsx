@@ -161,14 +161,13 @@ function StravaCallbackContent() {
                 <div className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-left">
                   <p className="text-sm font-semibold text-neutral-900">What to do:</p>
                   <ol className="mt-2 list-decimal list-inside space-y-1 text-sm text-neutral-600">
-                    <li>Go to your Strava account settings</li>
-                    <li>Navigate to "My API Application" or revoke and reconnect</li>
+                    <li>Go to homepage and click on "Connect with Strava"</li>
                     <li>Make sure to check the box for "View data about your private activities"</li>
                     <li>Try connecting again</li>
                   </ol>
                   <p className="mt-4 text-xs text-neutral-500">
                     <strong>Privacy note:</strong> FounderPace only stores run date/time, duration, and distance. 
-                    We do not collect or store any location data or other personal information.
+                    We do not collect or store any location data or other  personal information.
                   </p>
                 </div>
               )}
@@ -194,14 +193,6 @@ function StravaCallbackContent() {
         )}
         {state.status === "error" && (
           <div className="border-t border-neutral-200 bg-white p-4 space-y-2">
-            {state.isPermissionError && authorizeUrl ? (
-              <Link
-                href={authorizeUrl}
-                className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
-              >
-                Reconnect with Strava
-              </Link>
-            ) : null}
             <Link
               href="/"
               className="inline-flex w-full items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
