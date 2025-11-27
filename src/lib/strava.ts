@@ -85,11 +85,17 @@ export const fetchStravaActivities = async (accessToken: string) => {
 
     if (!res.ok) {
       if (res.status === 401) {
-        const error: Error & { code: string; statusCode: number } = Object.assign(
-          new Error("PRIVATE_ACTIVITIES_REQUIRED"),
-          { code: "PRIVATE_ACTIVITIES_REQUIRED", statusCode: 401 }
-        );
-        throw error;
+        // Only throw error if we have no activities
+        // If we already have some activities (public ones), return them instead
+        if (allActivities.length === 0) {
+          const error: Error & { code: string; statusCode: number } = Object.assign(
+            new Error("PRIVATE_ACTIVITIES_REQUIRED"),
+            { code: "PRIVATE_ACTIVITIES_REQUIRED", statusCode: 401 }
+          );
+          throw error;
+        }
+        // We have some activities, so return what we have
+        break;
       }
       throw new Error(`Failed to fetch activities (${res.status})`);
     }
