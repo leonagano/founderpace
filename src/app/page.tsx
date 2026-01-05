@@ -97,19 +97,19 @@ function HomeContent() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-6">
       {!tokenData ? (
-        <div className="text-center space-y-6 max-w-md">
-          <h1 className="text-4xl font-semibold">FounderPace</h1>
-          <p className="text-neutral-400 text-lg">
+        <div className="text-center space-y-8 max-w-2xl">
+          <h1 className="text-6xl sm:text-7xl font-semibold">FounderPace</h1>
+          <p className="text-neutral-400 text-xl sm:text-2xl">
             Generate a visual 365-dot grid of your Strava activities for 2025
           </p>
           {urlError && (
-            <div className="text-red-400 text-sm">
+            <div className="text-red-400 text-base">
               {urlError === "no_code" ? "Authorization cancelled" : decodeURIComponent(urlError)}
             </div>
           )}
           <button
             onClick={handleConnect}
-            className="transition-opacity hover:opacity-90"
+            className="transition-opacity hover:opacity-90 scale-150 sm:scale-[1.75]"
           >
             <Image
               src="/btn_strava_connect_with_orange.png"
