@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
-import { Footer } from "@/components/footer";
-import { TopNav } from "@/components/top-nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,9 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FounderPace — Founders who run",
-  description:
-    "Public, Strava-verified leaderboard for founders tracking their running volume and pace.",
+  title: "FounderPace — Your 2025 Running Year",
+  description: "Generate a visual 365-dot grid of your Strava activities for 2025.",
 };
 
 export default function RootLayout({
@@ -27,9 +24,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="overflow-x-hidden">
+    <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} bg-neutral-50 text-neutral-950 antialiased overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Script
           id="who-hit-endpoint"
@@ -39,9 +36,7 @@ export default function RootLayout({
           }}
         />
         <Script src="https://who-hit.vercel.app/script.js" strategy="afterInteractive" />
-        <TopNav />
-        <main className="min-h-screen overflow-x-hidden">{children}</main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

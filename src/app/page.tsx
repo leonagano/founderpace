@@ -1,49 +1,156 @@
-import Link from "next/link";
-import Image from "next/image";
-import { LeaderboardShell } from "@/components/leaderboard-shell";
-import { SidebarCta } from "@/components/sidebar-cta";
-import { ActiveChallengesPreview } from "@/components/active-challenges-preview";
-import { getLeaderboard } from "@/lib/leaderboard-service";
-import { buildStravaAuthorizeUrl } from "@/lib/urls";
-import { env } from "@/lib/env";
+"use client";
 
-export default async function Home() {
-  const initialLeaderboard = await getLeaderboard("all_time");
-  const authorizeUrl = buildStravaAuthorizeUrl();
-  const advertiseUrl = env.ADVERTISE_URL;
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { ActivityGrid } from "@/components/activity-grid";
+import { buildStravaAuthorizeUrl } from "@/lib/strava";
+
+type TokenData = {
+  access_token: string;
+  expires_at: number;
+};
+
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const [tokenData, setTokenData] = useState<TokenData | null>(null);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check if we have token in URL params (from OAuth callback)
+    const accessToken = searchParams.get("access_token");
+    const expiresAt = searchParams.get("expires_at");
+
+    if (accessToken && expiresAt) {
+      const tokenData: TokenData = {
+        access_token: accessToken,
+        expires_at: parseInt(expiresAt, 10),
+      };
+      
+      // Store in sessionStorage
+      sessionStorage.setItem("strava_token", JSON.stringify(tokenData));
+      setTokenData(tokenData);
+      
+      // Clean URL
+      window.history.replaceState({}, "", "/");
+    } else {
+      // Check sessionStorage
+      const stored = sessionStorage.getItem("strava_token");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as TokenData;
+          // Check if token is still valid (not expired)
+          const now = Math.floor(Date.now() / 1000);
+          if (parsed.expires_at > now) {
+            setTokenData(parsed);
+          } else {
+            sessionStorage.removeItem("strava_token");
+          }
+        } catch (e) {
+          sessionStorage.removeItem("strava_token");
+        }
+      }
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (tokenData) {
+      fetchActivities();
+    }
+  }, [tokenData]);
+
+  const fetchActivities = async () => {
+    if (!tokenData) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/activities", {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch activities");
+      }
+
+      const data = await res.json();
+      setActivities(data.activities || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch activities");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConnect = () => {
+    const authorizeUrl = buildStravaAuthorizeUrl();
+    window.location.href = authorizeUrl;
+  };
+
+  const urlError = searchParams.get("error");
 
   return (
-    <div className="mx-auto w-full max-w-6xl flex flex-col gap-8 px-4 py-6 sm:gap-12 sm:px-6 sm:py-10 lg:px-0">
-      <header className="flex flex-col gap-4 sm:gap-6">
-        <div className="flex items-center pr-20 sm:pr-0">
-          <Link href="/" className="flex items-center gap-2 sm:gap-3">
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-6">
+      {!tokenData ? (
+        <div className="text-center space-y-6 max-w-md">
+          <h1 className="text-4xl font-semibold">FounderPace</h1>
+          <p className="text-neutral-400 text-lg">
+            Generate a visual 365-dot grid of your Strava activities for 2025
+          </p>
+          {urlError && (
+            <div className="text-red-400 text-sm">
+              {urlError === "no_code" ? "Authorization cancelled" : decodeURIComponent(urlError)}
+            </div>
+          )}
+          <button
+            onClick={handleConnect}
+            className="transition-opacity hover:opacity-90"
+          >
             <Image
-              src="/icon_transparent.png"
-              alt="FounderPace icon"
-              width={56}
-              height={56}
-              priority
-              className="h-10 w-10 sm:h-14 sm:w-14"
+              src="/btn_strava_connect_with_orange.png"
+              alt="Connect with Strava"
+              width={193}
+              height={48}
+              className="h-auto w-auto"
             />
-            <span className="text-xs font-semibold uppercase tracking-[0.4em] text-neutral-500 sm:text-sm">
-              FounderPace
-            </span>
-          </Link>
+          </button>
         </div>
-        <h1 className="text-3xl font-semibold leading-tight text-neutral-900 sm:text-4xl lg:text-5xl">
-          The public leaderboard for founders who run
-        </h1>
-      </header>
-
-      <section className="grid gap-6 grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)] lg:gap-8">
-        <div className="flex flex-col gap-10 min-w-0">
-          <LeaderboardShell initialEntries={initialLeaderboard} />
-          <ActiveChallengesPreview />
+      ) : (
+        <div className="w-full max-w-6xl space-y-6">
+          {loading && (
+            <div className="text-center text-neutral-400">Loading your activities...</div>
+          )}
+          {error && (
+            <div className="text-center text-red-400">Error: {error}</div>
+          )}
+          {!loading && !error && activities.length > 0 && (
+            <ActivityGrid activities={activities} />
+          )}
+          {!loading && !error && activities.length === 0 && (
+            <div className="text-center text-neutral-400">
+              No activities found for 2025
+            </div>
+          )}
         </div>
-        <div className="lg:col-start-2">
-          <SidebarCta authorizeUrl={authorizeUrl} advertiseUrl={advertiseUrl ?? undefined} />
-        </div>
-      </section>
+      )}
+      <footer className="mt-auto pt-8 pb-4 text-center">
+        <p className="text-neutral-500 text-sm">
+          Created by <a href="https://x.com/leonagano" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white underline">Leo</a>
+        </p>
+      </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
