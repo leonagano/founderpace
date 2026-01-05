@@ -317,6 +317,14 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
         <button onClick={exportToPNG} disabled={isExporting} className="px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-neutral-200 transition-colors disabled:opacity-50">
           {isExporting ? "Exporting..." : "Save Image"}
         </button>
+        <a
+          href="https://buy.stripe.com/fZu14m1UQ2mgcuwgQTbbG0A"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-neutral-500 text-lg hover:text-neutral-300 underline mt-2"
+        >
+          Your brand here
+        </a>
       </div>
     </div>
   );

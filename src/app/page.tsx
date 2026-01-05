@@ -119,6 +119,15 @@ function HomeContent() {
               className="h-auto w-auto"
             />
           </button>
+          <p></p>
+          <a
+            href="https://buy.stripe.com/fZu14m1UQ2mgcuwgQTbbG0A"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-neutral-500 text-lg hover:text-neutral-300 underline"
+          >
+            Your brand here
+          </a>
         </div>
       ) : (
         <div className="w-full max-w-6xl space-y-6">
