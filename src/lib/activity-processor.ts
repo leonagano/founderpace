@@ -32,7 +32,7 @@ const normalizeActivityType = (type: string): ActivityType => {
   return "Other";
 };
 
-export const processActivities = (activities: StravaActivity[]): DayActivities[] => {
+export const processActivities = (activities: StravaActivity[], year: number): DayActivities[] => {
   // Create a map of date -> activities
   const dayMap = new Map<string, ActivityType[]>();
 
@@ -48,9 +48,9 @@ export const processActivities = (activities: StravaActivity[]): DayActivities[]
     dayMap.get(dateKey)!.push(activityType);
   });
 
-  // Generate all 365 days of 2025
-  const startDate = new Date("2025-01-01");
-  const endDate = new Date("2025-12-31");
+  // Generate all days for the specified year (handle leap years)
+  const startDate = new Date(`${year}-01-01`);
+  const endDate = new Date(`${year}-12-31`);
   const allDays: DayActivities[] = [];
 
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {

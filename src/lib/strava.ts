@@ -50,10 +50,10 @@ export const exchangeStravaCode = async (code: string): Promise<TokenResponse> =
   return (await res.json()) as TokenResponse;
 };
 
-export const fetchStravaActivities2025 = async (accessToken: string): Promise<StravaActivity[]> => {
+export const fetchStravaActivitiesForYear = async (accessToken: string, year: number): Promise<StravaActivity[]> => {
   const allActivities: StravaActivity[] = [];
-  const startDate = "2025-01-01T00:00:00Z";
-  const endDate = "2025-12-31T23:59:59Z";
+  const startDate = `${year}-01-01T00:00:00Z`;
+  const endDate = `${year}-12-31T23:59:59Z`;
   let page = 1;
   const perPage = 200;
 
@@ -90,10 +90,15 @@ export const fetchStravaActivities2025 = async (accessToken: string): Promise<St
     page++;
   }
 
-  // Filter to only activities within 2025 and group by local date
+  // Filter to only activities within the specified year and group by local date
   return allActivities.filter((activity) => {
     const localDate = new Date(activity.start_date_local);
-    return localDate >= new Date("2025-01-01") && localDate < new Date("2026-01-01");
+    return localDate >= new Date(`${year}-01-01`) && localDate < new Date(`${year + 1}-01-01`);
   });
+};
+
+// Keep the old function name for backward compatibility
+export const fetchStravaActivities2025 = async (accessToken: string): Promise<StravaActivity[]> => {
+  return fetchStravaActivitiesForYear(accessToken, 2025);
 };
 

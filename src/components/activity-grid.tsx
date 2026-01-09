@@ -6,15 +6,21 @@ import { processActivities, getActivityColor } from "@/lib/activity-processor";
 import type { StravaActivity } from "@/lib/strava";
 
 type ActivityGridProps = {
-  activities: StravaActivity[];
+  activitiesByYear: Record<number, StravaActivity[]>;
+  selectedYears: number[];
 };
 
-export const ActivityGrid = ({ activities }: ActivityGridProps) => {
+export const ActivityGrid = ({ activitiesByYear, selectedYears }: ActivityGridProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const gridSvgRef = useRef<SVGSVGElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [viewMode, setViewMode] = useState<"heatmap" | "grid">("heatmap");
-  const dayActivities = processActivities(activities);
+  
+  // Process activities for all selected years
+  const yearData = selectedYears.map((year) => ({
+    year,
+    dayActivities: processActivities(activitiesByYear[year] || [], year),
+  }));
 
   const DOT_SIZE = 16;
   const DOT_GAP = 4;
@@ -28,11 +34,21 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
   const getDayOfWeek = (date: Date): number => date.getDay();
   const getWeekNumber = (date: Date): number => {
     const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const startDayOfWeek = startOfYear.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    
+    // Calculate days since start of year
     const days = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-    return Math.floor(days / 7);
+    
+    // Calculate which week column this day belongs to
+    // Week 0 starts on the Sunday that contains or precedes Jan 1st
+    // If Jan 1st is Sunday, week 0 starts on Jan 1st
+    // If Jan 1st is Monday, week 0 starts on Dec 29 (previous year)
+    const weekNum = Math.floor((days + startDayOfWeek) / 7);
+    
+    return weekNum;
   };
 
-  const renderDot = (day: typeof dayActivities[0], x: number, y: number) => {
+  const renderDot = (day: typeof yearData[0]['dayActivities'][0], x: number, y: number) => {
     const { activities: dayActs } = day;
     const centerX = x + DOT_SIZE / 2;
     const centerY = y + DOT_SIZE / 2;
@@ -85,8 +101,7 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
       const svgHeight = svgRef.current.viewBox.baseVal.height;
       
       // Calculate attribution Y position (same calculation as below)
-      const gridHeight = DAYS_PER_WEEK * (DOT_SIZE + DOT_GAP) - DOT_GAP;
-      const legendY = gridHeight + SVG_PADDING + MONTH_LABEL_HEIGHT + 20;
+      const legendY = totalGridHeight + SVG_PADDING + MONTH_LABEL_HEIGHT + 20;
       const statsY = legendY + 30;
       const STATS_HEIGHT = 60;
       const attributionYPos = statsY + STATS_HEIGHT + 10; // statsY + STATS_HEIGHT + some padding
@@ -138,7 +153,10 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
         const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = downloadUrl;
-        link.download = "founderpace-2025.png";
+        const yearRange = selectedYears.length === 1 
+          ? `${selectedYears[0]}` 
+          : `${selectedYears[selectedYears.length - 1]}-${selectedYears[0]}`;
+        link.download = `founderpace-${yearRange}.png`;
         link.click();
         URL.revokeObjectURL(downloadUrl);
         URL.revokeObjectURL(url);
@@ -150,21 +168,23 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
     }
   };
 
-  // Calculate stats
-  const totalActivities = activities.length;
-  const daysWithActivities = dayActivities.filter((day) => day.activities.length > 0).length;
+  // Calculate combined stats across all years
+  const allActivities = selectedYears.flatMap((year) => activitiesByYear[year] || []);
+  const totalActivities = allActivities.length;
+  const allDayActivities = yearData.flatMap((yd) => yd.dayActivities);
+  const daysWithActivities = allDayActivities.filter((day) => day.activities.length > 0).length;
   const activityCounts = new Map<string, number>();
-  dayActivities.forEach((day) => {
+  allDayActivities.forEach((day) => {
     day.activities.forEach((activityType) => {
       activityCounts.set(activityType, (activityCounts.get(activityType) || 0) + 1);
     });
   });
   const mostCommonActivity = Array.from(activityCounts.entries()).sort((a, b) => b[1] - a[1])[0];
   
-  // Calculate longest streak
+  // Calculate longest streak across all years
   let longestStreak = 0;
   let currentStreak = 0;
-  dayActivities.forEach((day) => {
+  allDayActivities.forEach((day) => {
     if (day.activities.length > 0) {
       currentStreak++;
       longestStreak = Math.max(longestStreak, currentStreak);
@@ -174,38 +194,55 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
   });
 
   const gridWidth = WEEKS_PER_ROW * (DOT_SIZE + DOT_GAP) - DOT_GAP;
-  const gridHeight = DAYS_PER_WEEK * (DOT_SIZE + DOT_GAP) - DOT_GAP;
+  const singleYearGridHeight = DAYS_PER_WEEK * (DOT_SIZE + DOT_GAP) - DOT_GAP;
+  const YEAR_LABEL_HEIGHT = 25; // Space for year label between years
   const LEGEND_HEIGHT = 40;
   const STATS_HEIGHT = 60;
   const ATTRIBUTION_HEIGHT = 20;
+  const YEAR_SPACING = 10; // Space between years
+  
+  // Calculate total height for all years
+  const totalGridHeight = selectedYears.length * (singleYearGridHeight + YEAR_LABEL_HEIGHT + YEAR_SPACING) - YEAR_SPACING;
   const svgWidth = gridWidth + SVG_PADDING * 2 + DAY_LABEL_WIDTH;
-  const svgHeight = gridHeight + SVG_PADDING * 2 + FOOTER_HEIGHT + LEGEND_HEIGHT + MONTH_LABEL_HEIGHT + STATS_HEIGHT + ATTRIBUTION_HEIGHT;
-  const dots: { day: typeof dayActivities[0]; x: number; y: number }[] = [];
-  dayActivities.forEach((day) => {
-    const weekNum = getWeekNumber(day.date);
-    const dayOfWeek = getDayOfWeek(day.date);
-    const x = SVG_PADDING + DAY_LABEL_WIDTH + weekNum * (DOT_SIZE + DOT_GAP);
-    const y = SVG_PADDING + MONTH_LABEL_HEIGHT + dayOfWeek * (DOT_SIZE + DOT_GAP);
-    dots.push({ day, x, y });
+  const svgHeight = totalGridHeight + SVG_PADDING * 2 + FOOTER_HEIGHT + LEGEND_HEIGHT + MONTH_LABEL_HEIGHT + STATS_HEIGHT + ATTRIBUTION_HEIGHT;
+  
+  // Generate dots for all years, with vertical offset for each year
+  const dotsByYear: Array<{ year: number; dots: Array<{ day: typeof yearData[0]['dayActivities'][0]; x: number; y: number }> }> = [];
+  let currentYOffset = SVG_PADDING + MONTH_LABEL_HEIGHT;
+  
+  yearData.forEach(({ year, dayActivities }) => {
+    const yearDots: Array<{ day: typeof dayActivities[0]; x: number; y: number }> = [];
+    dayActivities.forEach((day) => {
+      const weekNum = getWeekNumber(day.date);
+      const dayOfWeek = getDayOfWeek(day.date);
+      const x = SVG_PADDING + DAY_LABEL_WIDTH + weekNum * (DOT_SIZE + DOT_GAP);
+      const y = currentYOffset + dayOfWeek * (DOT_SIZE + DOT_GAP);
+      yearDots.push({ day, x, y });
+    });
+    dotsByYear.push({ year, dots: yearDots });
+    currentYOffset += singleYearGridHeight + YEAR_LABEL_HEIGHT + YEAR_SPACING;
   });
 
-  // Get month labels - show first week of each month
+  // Get month labels for the first year (they'll be the same for all years in heatmap view)
   const monthLabels: Array<{ month: string; weekNum: number }> = [];
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const seenMonths = new Set<number>();
-  dayActivities.forEach((day) => {
-    const month = day.date.getMonth();
-    if (!seenMonths.has(month)) {
-      const weekNum = getWeekNumber(day.date);
-      // Only add if this is the first week of the month (or close to it)
-      const firstDayOfMonth = new Date(day.date.getFullYear(), month, 1);
-      const firstWeekNum = getWeekNumber(firstDayOfMonth);
-      if (weekNum === firstWeekNum || weekNum === firstWeekNum + 1) {
-        monthLabels.push({ month: monthNames[month], weekNum });
-        seenMonths.add(month);
+  if (yearData.length > 0) {
+    const firstYearDays = yearData[0].dayActivities;
+    const seenMonths = new Set<number>();
+    firstYearDays.forEach((day: typeof yearData[0]['dayActivities'][0]) => {
+      const month = day.date.getMonth();
+      if (!seenMonths.has(month)) {
+        const weekNum = getWeekNumber(day.date);
+        // Only add if this is the first week of the month (or close to it)
+        const firstDayOfMonth = new Date(day.date.getFullYear(), month, 1);
+        const firstWeekNum = getWeekNumber(firstDayOfMonth);
+        if (weekNum === firstWeekNum || weekNum === firstWeekNum + 1) {
+          monthLabels.push({ month: monthNames[month], weekNum });
+          seenMonths.add(month);
+        }
       }
-    }
-  });
+    });
+  }
 
   // Day of week labels
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -220,7 +257,7 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
     { type: "Other", color: getActivityColor("Other") },
   ];
 
-  const legendY = gridHeight + SVG_PADDING + MONTH_LABEL_HEIGHT + 20;
+  const legendY = totalGridHeight + SVG_PADDING + MONTH_LABEL_HEIGHT + 20;
   const legendItemSpacing = 80;
   // Calculate total legend width: (number of items - 1) * spacing + width of last item
   // Each item is approximately: DOT_SIZE/2 + 8 (gap) + text width (~50px) + spacing
@@ -237,7 +274,8 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
   const GRID_DOTS_PER_ROW = 15;
   const GRID_DOT_SIZE = 16; // Doubled from 8
   const GRID_DOT_GAP = 4; // Doubled from 2
-  const GRID_ROWS = Math.ceil(dayActivities.length / GRID_DOTS_PER_ROW);
+  const totalDays = allDayActivities.length;
+  const GRID_ROWS = Math.ceil(totalDays / GRID_DOTS_PER_ROW);
   const gridViewWidth = GRID_DOTS_PER_ROW * (GRID_DOT_SIZE + GRID_DOT_GAP) - GRID_DOT_GAP;
   const gridViewHeight = GRID_ROWS * (GRID_DOT_SIZE + GRID_DOT_GAP) - GRID_DOT_GAP;
   // Calculate max width needed for stats (last stat at x=40+450+text width ~100 = 590)
@@ -245,7 +283,7 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
   const gridSvgWidth = Math.max(gridViewWidth + 80, maxStatsWidth); // Ensure enough width for stats
   const gridSvgHeight = gridViewHeight + 120; // Extra space for legend/stats and instructions
 
-  const renderGridDot = (day: typeof dayActivities[0], index: number) => {
+  const renderGridDot = (day: typeof yearData[0]['dayActivities'][0], index: number) => {
     const row = Math.floor(index / GRID_DOTS_PER_ROW);
     const col = index % GRID_DOTS_PER_ROW;
     // Center the grid horizontally within the SVG
@@ -349,7 +387,10 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
         const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = downloadUrl;
-        link.download = "founderpace-2025.png";
+        const yearRange = selectedYears.length === 1 
+          ? `${selectedYears[0]}` 
+          : `${selectedYears[selectedYears.length - 1]}-${selectedYears[0]}`;
+        link.download = `founderpace-${yearRange}.png`;
         link.click();
         URL.revokeObjectURL(downloadUrl);
         URL.revokeObjectURL(url);
@@ -408,7 +449,7 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
             );
           })}
           
-          {/* Day of week labels */}
+          {/* Day of week labels - render for first year only (they repeat for all years) */}
           {dayLabels.map((day, idx) => {
             const dayY = SVG_PADDING + MONTH_LABEL_HEIGHT + idx * (DOT_SIZE + DOT_GAP) + DOT_SIZE / 2;
             return (
@@ -426,8 +467,27 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
             );
           })}
           
-          {/* Activity dots */}
-          {dots.map(({ day, x, y }) => renderDot(day, x, y))}
+          {/* Year labels and activity dots */}
+                  {dotsByYear.map(({ year, dots: yearDots }, yearIdx) => {
+                    const yearYOffset = SVG_PADDING + MONTH_LABEL_HEIGHT + yearIdx * (singleYearGridHeight + YEAR_LABEL_HEIGHT + YEAR_SPACING);
+                    return (
+                      <g key={year}>
+                        {/* Year label */}
+                        <text
+                          x={SVG_PADDING + DAY_LABEL_WIDTH}
+                          y={yearYOffset - 5}
+                          fill="#ffffff"
+                          fontSize="16"
+                          fontFamily="system-ui, sans-serif"
+                          fontWeight="600"
+                        >
+                          {year}
+                        </text>
+                        {/* Activity dots for this year */}
+                        {yearDots.map(({ day, x, y }) => renderDot(day, x, y))}
+                      </g>
+                    );
+                  })}
           
           {/* Legend */}
           {activityTypes.map((item, idx) => {
@@ -488,11 +548,11 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
           <div className="flex justify-center w-full">
             <div className="flex justify-center">
               <svg ref={gridSvgRef} width={gridSvgWidth} height={gridSvgHeight} viewBox={`0 0 ${gridSvgWidth} ${gridSvgHeight}`} className="bg-[#0a0a0a]">
-              {dayActivities.map((day, index) => renderGridDot(day, index))}
+              {allDayActivities.map((day, index) => renderGridDot(day, index))}
               
               {/* How to read text */}
               <text x={gridSvgWidth / 2} y={gridViewHeight + 30} fill="#ffffff" fontSize="11" fontFamily="system-ui, sans-serif" textAnchor="middle" fillOpacity={0.6}>
-                Each dot = one day in 2025. Read left to right, top to bottom.
+                {`Each dot = one day${selectedYears.length > 1 ? ` (${selectedYears.join(', ')})` : ` (${selectedYears[0]})`}. Read left to right, top to bottom.`}
               </text>
               
               {/* Legend - centered */}

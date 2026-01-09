@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchStravaActivities2025 } from "@/lib/strava";
+import { fetchStravaActivitiesForYear } from "@/lib/strava";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -9,10 +9,19 @@ export async function GET(request: NextRequest) {
   }
 
   const accessToken = authHeader.substring(7);
+  const { searchParams } = new URL(request.url);
+  const yearParam = searchParams.get("year");
+  const year = yearParam ? parseInt(yearParam, 10) : new Date().getFullYear();
+
+  // Validate year (reasonable range: 2010 to current year + 1)
+  const currentYear = new Date().getFullYear();
+  if (isNaN(year) || year < 2010 || year > currentYear + 1) {
+    return NextResponse.json({ error: "Invalid year" }, { status: 400 });
+  }
 
   try {
-    const activities = await fetchStravaActivities2025(accessToken);
-    return NextResponse.json({ activities });
+    const activities = await fetchStravaActivitiesForYear(accessToken, year);
+    return NextResponse.json({ activities, year });
   } catch (error) {
     console.error("Failed to fetch activities:", error);
     return NextResponse.json(

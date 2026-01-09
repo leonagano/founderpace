@@ -14,9 +14,10 @@ type TokenData = {
 function HomeContent() {
   const searchParams = useSearchParams();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
-  const [activities, setActivities] = useState<any[]>([]);
+  const [activitiesByYear, setActivitiesByYear] = useState<Record<number, any[]>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedYears, setSelectedYears] = useState<number[]>([new Date().getFullYear()]);
 
   useEffect(() => {
     // Check if we have token in URL params (from OAuth callback)
@@ -56,35 +57,64 @@ function HomeContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (tokenData) {
-      fetchActivities();
+    if (tokenData && selectedYears.length > 0) {
+      fetchActivitiesForYears(selectedYears);
     }
-  }, [tokenData]);
+  }, [tokenData, selectedYears]);
 
-  const fetchActivities = async () => {
+  const fetchActivitiesForYears = async (years: number[]) => {
     if (!tokenData) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch("/api/activities", {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-        },
+      // Fetch activities for all selected years in parallel
+      const fetchPromises = years.map(async (year) => {
+        // Check if we already have data for this year
+        if (activitiesByYear[year]) {
+          return { year, activities: activitiesByYear[year] };
+        }
+
+        const res = await fetch(`/api/activities?year=${year}`, {
+          headers: {
+            Authorization: `Bearer ${tokenData.access_token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch activities for ${year}`);
+        }
+
+        const data = await res.json();
+        return { year, activities: data.activities || [] };
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch activities");
-      }
-
-      const data = await res.json();
-      setActivities(data.activities || []);
+      const results = await Promise.all(fetchPromises);
+      
+      // Update state with all fetched activities
+      const newActivitiesByYear = { ...activitiesByYear };
+      results.forEach(({ year, activities }) => {
+        newActivitiesByYear[year] = activities;
+      });
+      setActivitiesByYear(newActivitiesByYear);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch activities");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleYearToggle = (year: number) => {
+    setSelectedYears((prev) => {
+      if (prev.includes(year)) {
+        // Remove year if already selected
+        return prev.filter((y) => y !== year);
+      } else {
+        // Add year if not selected
+        return [...prev, year].sort((a, b) => b - a); // Sort descending
+      }
+    });
   };
 
   const handleConnect = () => {
@@ -100,7 +130,7 @@ function HomeContent() {
         <div className="text-center space-y-8 max-w-2xl">
           <h1 className="text-6xl sm:text-7xl font-semibold">FounderPace</h1>
           <p className="text-neutral-400 text-xl sm:text-2xl">
-            Generate a visual 365-dot grid of your Strava activities for 2025
+            Generate a visual 365-dot grid of your Strava activities
           </p>
           {urlError && (
             <div className="text-red-400 text-base">
@@ -153,19 +183,40 @@ function HomeContent() {
         </div>
       ) : (
         <div className="w-full max-w-6xl space-y-6">
+          {/* Year Selector - Checkboxes */}
+          <div className="flex flex-col items-center gap-4">
+            <label className="text-neutral-400 text-sm">Select years to visualize:</label>
+            <div className="flex flex-wrap justify-center gap-3 max-w-2xl">
+              {Array.from({ length: new Date().getFullYear() - 2010 + 1 }, (_, i) => {
+                const year = new Date().getFullYear() - i;
+                return (
+                  <label
+                    key={year}
+                    className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedYears.includes(year)}
+                      onChange={() => handleYearToggle(year)}
+                      className="w-4 h-4 rounded border-neutral-700 bg-neutral-800 text-orange-500 focus:ring-orange-500 focus:ring-2"
+                    />
+                    <span className="text-neutral-300 text-sm">{year}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {selectedYears.length === 0 && (
+              <p className="text-neutral-500 text-sm">Please select at least one year</p>
+            )}
+          </div>
           {loading && (
             <div className="text-center text-neutral-400">Loading your activities...</div>
           )}
           {error && (
             <div className="text-center text-red-400">Error: {error}</div>
           )}
-          {!loading && !error && activities.length > 0 && (
-            <ActivityGrid activities={activities} />
-          )}
-          {!loading && !error && activities.length === 0 && (
-            <div className="text-center text-neutral-400">
-              No activities found for 2025
-            </div>
+          {!loading && !error && selectedYears.length > 0 && (
+            <ActivityGrid activitiesByYear={activitiesByYear} selectedYears={selectedYears} />
           )}
         </div>
       )}
