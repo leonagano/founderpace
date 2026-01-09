@@ -538,6 +538,11 @@ export const ActivityGrid = ({ activities }: ActivityGridProps) => {
                   </>
                 );
               })()}
+              
+              {/* Attribution */}
+              <text x={gridSvgWidth - 20} y={gridSvgHeight - 10} fill="#666666" fontSize="12" fontFamily="system-ui, sans-serif" textAnchor="end">
+                Created with FounderPace.com
+              </text>
               </svg>
             </div>
           </div>

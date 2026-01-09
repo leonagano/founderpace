@@ -119,6 +119,28 @@ function HomeContent() {
               className="h-auto w-auto"
             />
           </button>
+          <div className="flex flex-col sm:flex-row gap-6 items-center justify-center mt-8">
+            <div className="flex flex-col items-center">
+              <p className="text-neutral-500 text-sm mb-2">Heatmap View</p>
+              <Image
+                src="/heatmap-sample.png"
+                alt="Heatmap sample"
+                width={600}
+                height={600}
+                className="rounded-lg border border-neutral-800 max-w-full h-auto"
+              />
+            </div>
+            <div className="flex flex-col items-center">
+              <p className="text-neutral-500 text-sm mb-2">Grid View</p>
+              <Image
+                src="/grid-sample.png"
+                alt="Grid sample"
+                width={600}
+                height={600}
+                className="rounded-lg border border-neutral-800 max-w-full h-auto"
+              />
+            </div>
+          </div>
           <p></p>
           <a
             href="https://buy.stripe.com/fZu14m1UQ2mgcuwgQTbbG0A"
