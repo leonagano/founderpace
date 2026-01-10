@@ -521,7 +521,7 @@ export const ActivityGrid = ({ activitiesByYear, selectedYears }: ActivityGridPr
           )}
           
               {/* Attribution */}
-              <text x={svgWidth - SVG_PADDING} y={attributionY} fill="#666666" fontSize="12" fontFamily="system-ui, sans-serif" textAnchor="end">
+              <text x={svgWidth - SVG_PADDING} y={attributionY} fill="#ffffff" fontSize="14" fontFamily="system-ui, sans-serif" textAnchor="end" fontWeight="600" fillOpacity={0.9}>
                 Created with FounderPace.com
               </text>
             </svg>
@@ -600,7 +600,7 @@ export const ActivityGrid = ({ activitiesByYear, selectedYears }: ActivityGridPr
               })()}
               
               {/* Attribution */}
-              <text x={gridSvgWidth - 20} y={gridSvgHeight - 10} fill="#666666" fontSize="12" fontFamily="system-ui, sans-serif" textAnchor="end">
+              <text x={gridSvgWidth - 20} y={gridSvgHeight - 10} fill="#ffffff" fontSize="14" fontFamily="system-ui, sans-serif" textAnchor="end" fontWeight="600" fillOpacity={0.9}>
                 Created with FounderPace.com
               </text>
               </svg>

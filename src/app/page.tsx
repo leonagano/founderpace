@@ -170,6 +170,16 @@ function HomeContent() {
                 className="rounded-lg border border-neutral-800 max-w-full h-auto"
               />
             </div>
+            <div className="flex flex-col items-center">
+              <p className="text-neutral-500 text-sm mb-2">Multiple Years</p>
+              <Image
+                src="/multiple-sample.png"
+                alt="Multiple years sample"
+                width={600}
+                height={600}
+                className="rounded-lg border border-neutral-800 max-w-full h-auto"
+              />
+            </div>
           </div>
           <p></p>
           <a
