@@ -232,7 +232,7 @@ function HomeContent() {
       )}
       <footer className="mt-auto pt-8 pb-4 text-center">
         <p className="text-neutral-500 text-sm">
-          Created by <a href="https://x.com/leonagano" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white underline">Leo</a>
+          Created by <a href="https://www.strava.com/athletes/52728930" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-white underline">Leo</a>
         </p>
       </footer>
     </div>
